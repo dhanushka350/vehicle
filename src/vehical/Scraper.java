@@ -74,6 +74,11 @@ public class Scraper {
             String desc = "";
             String year = "";
             String modal = "";
+            String img1 = "";
+            String img2 = "";
+            String img3 = "";
+            String img4 = "";
+            String img5 = "";
 
             List<WebElement> tbl = driver.findElementByXPath("/html/body/div[1]/div[1]/main/div[1]/div[3]/div[5]/div[3]/div[2]/div[5]/div[1]/table/tbody")
                     .findElements(By.xpath("./*"));
@@ -86,14 +91,13 @@ public class Scraper {
             WebElement info = driver.findElementByXPath("//*[@id=\"detailsContactDealerForm\"]").findElement(By.tagName("strong"));
             String[] split = info.getAttribute("innerText").split(" ");
             year = info.getAttribute("innerText").split(" ")[0];
-            
+
             List<String> arr = new ArrayList<String>(Arrays.asList(split));
             arr.remove(0);
             arr.remove(1);
             for (String string : arr) {
-                modal = modal+" "+string;
+                modal = modal + " " + string;
             }
-            
 
             for (WebElement row : tbl) {
                 System.out.println(row.getTagName());
@@ -122,6 +126,33 @@ public class Scraper {
                 }
             }
 
+            for (int i = 0; i < 5; i++) {
+                WebElement gallery = driver.findElementByXPath("/html/body/div[1]/div[1]/main/div[1]/div[3]/div[5]/div[3]/div[2]/div[1]/div[2]");
+                if (i == 0) {
+                    executor.executeScript("arguments[0].click();", gallery.findElements(By.xpath("./*")).get(1).findElement(By.tagName("div")));
+                    Thread.sleep(5000);
+                    img1 = driver.findElementByXPath("/html/body/div[1]/div[1]/main/div[1]/div[3]/div[5]/div[3]/div[2]/div[1]/div[1]/div/a/div/img").getAttribute("src");
+                } else if (i == 1) {
+                    executor.executeScript("arguments[0].click();", gallery.findElements(By.xpath("./*")).get(2).findElement(By.tagName("div")));
+                    Thread.sleep(5000);
+                    img2 = driver.findElementByXPath("/html/body/div[1]/div[1]/main/div[1]/div[3]/div[5]/div[3]/div[2]/div[1]/div[1]/div/a/div/img").getAttribute("src");
+                } else if (i == 2) {
+                    executor.executeScript("arguments[0].click();", gallery.findElements(By.xpath("./*")).get(3).findElement(By.tagName("div")));
+                    Thread.sleep(5000);
+                    img3 = driver.findElementByXPath("/html/body/div[1]/div[1]/main/div[1]/div[3]/div[5]/div[3]/div[2]/div[1]/div[1]/div/a/div/img").getAttribute("src");
+                } else if (i == 3) {
+                    executor.executeScript("arguments[0].click();", gallery.findElements(By.xpath("./*")).get(4).findElement(By.tagName("div")));
+                    Thread.sleep(5000);
+                    img4 = driver.findElementByXPath("/html/body/div[1]/div[1]/main/div[1]/div[3]/div[5]/div[3]/div[2]/div[1]/div[1]/div/a/div/img").getAttribute("src");
+                } else if (i == 4) {
+                    executor.executeScript("arguments[0].click();", gallery.findElements(By.xpath("./*")).get(5).findElement(By.tagName("div")));
+                    Thread.sleep(5000);
+                    img5 = driver.findElementByXPath("/html/body/div[1]/div[1]/main/div[1]/div[3]/div[5]/div[3]/div[2]/div[1]/div[1]/div/a/div/img").getAttribute("src");
+                }
+//                driver.navigate().refresh();
+                Thread.sleep(2000);
+            }
+
             System.out.println("POST TITLE - " + title);
             System.out.println("MILAGE - " + mileage.replace("miles", ""));
             System.out.println("BELOW MARKETS - " + belowMarket);
@@ -135,6 +166,12 @@ public class Scraper {
             System.out.println("DESC - " + desc);
             System.out.println("YEAR - " + year);
             System.out.println("MODEL - " + modal);
+            System.out.println("IMG 1 - " + img1);
+            System.out.println("IMG 2 - " + img2);
+            System.out.println("IMG 3 - " + img3);
+            System.out.println("IMG 4 - " + img4);
+            System.out.println("IMG 5 - " + img5);
+
         }
     }
 }
