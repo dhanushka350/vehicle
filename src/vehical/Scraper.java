@@ -26,6 +26,7 @@ import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import vehical.initializer.FirefoxInitializer;
@@ -80,9 +81,28 @@ public class Scraper {
         List<Data> ds = new ArrayList<>();
         for (WebElement ad : list) {
             data = new Data();
+
+            System.err.println(ad.getAttribute("class") + "========");
+            String featuredImage = ad.findElement(By.tagName("div")).findElement(By.tagName("img")).getAttribute("src");
+            String post_content = ad.findElement(By.tagName("div")).findElement(By.tagName("h4")).getAttribute("innerText");
+            String post_excerpt = "";
+            String post_status = "publish";
+            String make = post_content.split(" ")[1];
+
             executor.executeScript("arguments[0].click();", ad);
             Thread.sleep(5000);
             String title = driver.findElementByXPath("/html/body/div[1]/div[1]/main/div[1]/div[3]/div[5]/h1").getAttribute("innerText");
+            String condition = driver.findElementByXPath("/html/body/div[1]/div[1]/div[1]/ul/li[2]")
+                    .getAttribute("innerText").split(" ")[1];
+
+            String price = ad.findElement(By.tagName("div")).findElement(By.className("cg-dealFinder-result-stats"))
+                    .findElements(By.xpath("./*")).get(0).findElement(By.tagName("span")).getAttribute("innerText");
+            String salePrice = "";
+            price = price.replace(" ", "");
+            price = price.split("\n")[1].replace("$", "").replace(",", ".");
+            double sale = 1.14 * Double.parseDouble(price);
+            salePrice = Math.round(sale * 100D) / 100D + "";
+
             String mileage = "";
             String belowMarket = "";
             String location = "";
@@ -108,7 +128,12 @@ public class Scraper {
             belowMarket = toptbl.findElement(By.tagName("tr")).findElements(By.xpath("./*")).get(0)
                     .getAttribute("innerText").replace("BELOW MARKET", "");
 
-            desc = driver.findElementByXPath("//*[@id=\"#description\"]").getAttribute("innerText");
+            try {
+                desc = driver.findElementByXPath("//*[@id=\"#description\"]").getAttribute("innerText");
+            } catch (NoSuchElementException r) {
+                System.err.println("ERROR : DESCRIPTION NOT FOUND");
+            }
+
             WebElement info = driver.findElementByXPath("//*[@id=\"detailsContactDealerForm\"]").findElement(By.tagName("strong"));
             String[] split = info.getAttribute("innerText").split(" ");
             year = info.getAttribute("innerText").split(" ")[0];
@@ -147,32 +172,41 @@ public class Scraper {
                 }
             }
 
-            for (int i = 0; i < 5; i++) {
-                WebElement gallery = driver.findElementByXPath("/html/body/div[1]/div[1]/main/div[1]/div[3]/div[5]/div[3]/div[2]/div[1]/div[2]");
-                if (i == 0) {
-                    executor.executeScript("arguments[0].click();", gallery.findElements(By.xpath("./*")).get(1).findElement(By.tagName("div")));
-                    Thread.sleep(5000);
-                    img1 = driver.findElementByXPath("/html/body/div[1]/div[1]/main/div[1]/div[3]/div[5]/div[3]/div[2]/div[1]/div[1]/div/a/div/img").getAttribute("src");
-                } else if (i == 1) {
-                    executor.executeScript("arguments[0].click();", gallery.findElements(By.xpath("./*")).get(2).findElement(By.tagName("div")));
-                    Thread.sleep(5000);
-                    img2 = driver.findElementByXPath("/html/body/div[1]/div[1]/main/div[1]/div[3]/div[5]/div[3]/div[2]/div[1]/div[1]/div/a/div/img").getAttribute("src");
-                } else if (i == 2) {
-                    executor.executeScript("arguments[0].click();", gallery.findElements(By.xpath("./*")).get(3).findElement(By.tagName("div")));
-                    Thread.sleep(5000);
-                    img3 = driver.findElementByXPath("/html/body/div[1]/div[1]/main/div[1]/div[3]/div[5]/div[3]/div[2]/div[1]/div[1]/div/a/div/img").getAttribute("src");
-                } else if (i == 3) {
-                    executor.executeScript("arguments[0].click();", gallery.findElements(By.xpath("./*")).get(4).findElement(By.tagName("div")));
-                    Thread.sleep(5000);
-                    img4 = driver.findElementByXPath("/html/body/div[1]/div[1]/main/div[1]/div[3]/div[5]/div[3]/div[2]/div[1]/div[1]/div/a/div/img").getAttribute("src");
-                } else if (i == 4) {
-                    executor.executeScript("arguments[0].click();", gallery.findElements(By.xpath("./*")).get(5).findElement(By.tagName("div")));
-                    Thread.sleep(5000);
-                    img5 = driver.findElementByXPath("/html/body/div[1]/div[1]/main/div[1]/div[3]/div[5]/div[3]/div[2]/div[1]/div[1]/div/a/div/img").getAttribute("src");
+            try {
+                for (int i = 0; i < 5; i++) {
+                    WebElement gallery = driver.findElementByXPath("/html/body/div[1]/div[1]/main/div[1]/div[3]/div[5]/div[3]/div[2]/div[1]/div[2]");
+                    if (i == 0) {
+                        executor.executeScript("arguments[0].click();", gallery.findElements(By.xpath("./*")).get(1).findElement(By.tagName("div")));
+                        Thread.sleep(5000);
+                        img1 = driver.findElementByXPath("/html/body/div[1]/div[1]/main/div[1]/div[3]/div[5]/div[3]/div[2]/div[1]/div[1]/div/a/div/img").getAttribute("src");
+                    } else if (i == 1) {
+                        executor.executeScript("arguments[0].click();", gallery.findElements(By.xpath("./*")).get(2).findElement(By.tagName("div")));
+                        Thread.sleep(5000);
+                        img2 = driver.findElementByXPath("/html/body/div[1]/div[1]/main/div[1]/div[3]/div[5]/div[3]/div[2]/div[1]/div[1]/div/a/div/img").getAttribute("src");
+                    } else if (i == 2) {
+                        executor.executeScript("arguments[0].click();", gallery.findElements(By.xpath("./*")).get(3).findElement(By.tagName("div")));
+                        Thread.sleep(5000);
+                        img3 = driver.findElementByXPath("/html/body/div[1]/div[1]/main/div[1]/div[3]/div[5]/div[3]/div[2]/div[1]/div[1]/div/a/div/img").getAttribute("src");
+                    } else if (i == 3) {
+                        executor.executeScript("arguments[0].click();", gallery.findElements(By.xpath("./*")).get(4).findElement(By.tagName("div")));
+                        Thread.sleep(5000);
+                        img4 = driver.findElementByXPath("/html/body/div[1]/div[1]/main/div[1]/div[3]/div[5]/div[3]/div[2]/div[1]/div[1]/div/a/div/img").getAttribute("src");
+                    } else if (i == 4) {
+                        executor.executeScript("arguments[0].click();", gallery.findElements(By.xpath("./*")).get(5).findElement(By.tagName("div")));
+                        Thread.sleep(5000);
+                        img5 = driver.findElementByXPath("/html/body/div[1]/div[1]/main/div[1]/div[3]/div[5]/div[3]/div[2]/div[1]/div[1]/div/a/div/img").getAttribute("src");
+                    }
+                    Thread.sleep(2000);
                 }
-                Thread.sleep(2000);
+            } catch (NoSuchElementException exception) {
+                System.err.println("ERROR : LOW IMAGE COUNT");
             }
-
+            System.out.println("FEATURED IMAGE - " + featuredImage);
+            System.out.println("POST CONTENT - " + post_content);
+            System.out.println("MAKE - " + make);
+            System.out.println("PRICE - " + price);
+            System.out.println("SALE PRICE - " + salePrice);
+            System.out.println("CONDITION - " + condition);
             System.out.println("POST TITLE - " + title);
             System.out.println("MILAGE - " + mileage.replace("miles", ""));
             System.out.println("BELOW MARKETS - " + belowMarket);
@@ -191,7 +225,16 @@ public class Scraper {
             System.out.println("IMG 3 - " + img3);
             System.out.println("IMG 4 - " + img4);
             System.out.println("IMG 5 - " + img5);
+
             data.setPost_title(title);
+            data.setPost_content(post_content);
+            data.setPost_excerpt(post_excerpt);
+            data.setPost_status(post_status);
+            data.setMake(make);
+            data.setCondition(condition);
+            data.setSale_price(salePrice);
+            data.setPrice(price);
+            data.setFeatured_Image(featuredImage);
             data.setMileage(mileage);
             data.setBelow_market(belowMarket);
             data.setLocation(location);
@@ -308,7 +351,7 @@ public class Scraper {
             sheet.autoSizeColumn(i);
         }
 
-        FileOutputStream fileOut = new FileOutputStream(location);
+        FileOutputStream fileOut = new FileOutputStream(location+"/inventory.xlsx");
         workbook.write(fileOut);
         fileOut.close();
         workbook.close();
