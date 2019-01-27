@@ -10,10 +10,15 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import model.Data;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CreationHelper;
@@ -22,6 +27,7 @@ import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.openqa.selenium.By;
@@ -41,7 +47,7 @@ public class Scraper {
 
     public boolean startScrape(String url, String location) throws InterruptedException, IOException {
         this.location = location;
-
+        createXlsFile();
         FirefoxDriver driver = FirefoxInitializer.getDriver();
         JavascriptExecutor executor = (JavascriptExecutor) driver;
         driver.get(url);
@@ -147,28 +153,29 @@ public class Scraper {
 
             for (WebElement row : tbl) {
                 System.out.println(row.getTagName());
+
                 try {
-
-                    if (row.findElements(By.xpath("./*")).get(0).getAttribute("innerText").contains("Mileage")) {
-                        mileage = row.findElements(By.xpath("./*")).get(1).getAttribute("innerText");
-                    } else if (row.findElements(By.xpath("./*")).get(0).getAttribute("innerText").contains("Location")) {
-                        location = row.findElements(By.xpath("./*")).get(1).getAttribute("innerText");
-                    } else if (row.findElements(By.xpath("./*")).get(0).getAttribute("innerText").contains("Transmission")) {
-                        transmission = row.findElements(By.xpath("./*")).get(1).getAttribute("innerText");
-                    } else if (row.findElements(By.xpath("./*")).get(0).getAttribute("innerText").contains("Engine")) {
-                        engine = row.findElements(By.xpath("./*")).get(1).getAttribute("innerText");
-                    } else if (row.findElements(By.xpath("./*")).get(0).getAttribute("innerText").contains("Exterior Color")) {
-                        exterior_color = row.findElements(By.xpath("./*")).get(1).getAttribute("innerText");
-                    } else if (row.findElements(By.xpath("./*")).get(0).getAttribute("innerText").contains("Interior Color")) {
-                        interior_color = row.findElements(By.xpath("./*")).get(1).getAttribute("innerText");
-                    } else if (row.findElements(By.xpath("./*")).get(0).getAttribute("innerText").contains("VIN")) {
-                        vin = row.findElements(By.xpath("./*")).get(1).getAttribute("innerText");
-                    } else if (row.findElements(By.xpath("./*")).get(0).getAttribute("innerText").contains("Drivetrain")) {
-                        drivetrain = row.findElements(By.xpath("./*")).get(1).getAttribute("innerText");
-                    }
-
-                } catch (Exception e) {
-
+                    row.findElements(By.xpath("./*")).get(0);
+                } catch (Exception t) {
+                    continue;
+                }
+                
+                if (row.findElements(By.xpath("./*")).get(0).getAttribute("innerText").contains("Mileage")) {
+                    mileage = row.findElements(By.xpath("./*")).get(1).getAttribute("innerText");
+                } else if (row.findElements(By.xpath("./*")).get(0).getAttribute("innerText").contains("Location")) {
+                    location = row.findElements(By.xpath("./*")).get(1).getAttribute("innerText");
+                } else if (row.findElements(By.xpath("./*")).get(0).getAttribute("innerText").contains("Transmission")) {
+                    transmission = row.findElements(By.xpath("./*")).get(1).getAttribute("innerText");
+                } else if (row.findElements(By.xpath("./*")).get(0).getAttribute("innerText").contains("Engine")) {
+                    engine = row.findElements(By.xpath("./*")).get(1).getAttribute("innerText");
+                } else if (row.findElements(By.xpath("./*")).get(0).getAttribute("innerText").contains("Exterior Color")) {
+                    exterior_color = row.findElements(By.xpath("./*")).get(1).getAttribute("innerText");
+                } else if (row.findElements(By.xpath("./*")).get(0).getAttribute("innerText").contains("Interior Color")) {
+                    interior_color = row.findElements(By.xpath("./*")).get(1).getAttribute("innerText");
+                } else if (row.findElements(By.xpath("./*")).get(0).getAttribute("innerText").contains("VIN")) {
+                    vin = row.findElements(By.xpath("./*")).get(1).getAttribute("innerText");
+                } else if (row.findElements(By.xpath("./*")).get(0).getAttribute("innerText").contains("Drivetrain")) {
+                    drivetrain = row.findElements(By.xpath("./*")).get(1).getAttribute("innerText");
                 }
             }
 
@@ -255,105 +262,125 @@ public class Scraper {
             ds.add(data);
 
         }
-        createXlsFile(ds);
+        try {
+            appendRow(ds);
+        } catch (InvalidFormatException ex) {
+            Logger.getLogger(Scraper.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
-    public void createXlsFile(List<Data> datalist) throws IOException {
-        Workbook workbook = new XSSFWorkbook();
-        CreationHelper createHelper = workbook.getCreationHelper();
-        Sheet sheet = workbook.createSheet("Inventory");
-        Font headerFont = workbook.createFont();
-        headerFont.setBold(true);
-        headerFont.setFontHeightInPoints((short) 14);
-        headerFont.setColor(IndexedColors.RED.getIndex());
+    private void appendRow(List<Data> datalist) throws IOException, InvalidFormatException {
+        try {
 
-        CellStyle headerCellStyle = workbook.createCellStyle();
-        headerCellStyle.setFont(headerFont);
+            Workbook wb3 = WorkbookFactory.create(new FileInputStream(location + "/inventory.xlsx"));
+            Sheet sh = wb3.getSheet("inventory");
+            int rows = sh.getLastRowNum();
 
-        Row headerRow = sheet.createRow(0);
+            for (Data data : datalist) {
+                Row row = sh.createRow(rows++);
+                row.createCell(0).setCellValue(data.getPost_title());
+                row.createCell(1).setCellValue(data.getPost_content());
+                row.createCell(2).setCellValue(data.getPost_excerpt());
+                row.createCell(3).setCellValue(data.getPost_status());
+                row.createCell(4).setCellValue(data.getMake());
+                row.createCell(5).setCellValue(data.getCondition());
+                row.createCell(6).setCellValue(data.getSale_price());
+                row.createCell(7).setCellValue(data.getPrice());
+                row.createCell(8).setCellValue(data.getMileage());
+                row.createCell(9).setCellValue(data.getFeatured_Image());
+                row.createCell(10).setCellValue(data.getImages());
+                row.createCell(11).setCellValue(data.getPhotourl1());
+                row.createCell(12).setCellValue(data.getPhotourl2());
+                row.createCell(13).setCellValue(data.getPhotourl3());
+                row.createCell(14).setCellValue(data.getPhotourl4());
+                row.createCell(14).setCellValue(data.getPhotourl5());
+                row.createCell(14).setCellValue(data.getBelow_market());
+                row.createCell(14).setCellValue(data.getLocation());
+                row.createCell(14).setCellValue(data.getTransmission());
+                row.createCell(14).setCellValue(data.getEngine());
+                row.createCell(14).setCellValue(data.getExterior_color());
+                row.createCell(14).setCellValue(data.getInterior_color());
+                row.createCell(14).setCellValue(data.getVIN_number());
+                row.createCell(14).setCellValue(data.getDrive_train());
+                row.createCell(14).setCellValue(data.getDescription());
+                row.createCell(14).setCellValue(data.getYear());
+                row.createCell(14).setCellValue(data.getModel());
+            }
 
-        ArrayList<String> list = new ArrayList();
+            FileOutputStream fileOut = new FileOutputStream(location + "/inventory.xlsx");
+            wb3.write(fileOut);
+            fileOut.close();
+            System.out.println("excel updated.");
 
-        list.add("Post_title");
-        list.add("post_content");
-        list.add("post_excerpt");
-        list.add("post_status");
-        list.add("make");
-        list.add("condition");
-        list.add("Sale price");
-        list.add("Price");
-        list.add("Mileage");
-        list.add("Featured Image");
-        list.add("Images");
-        list.add("photourl1");
-        list.add("photourl2");
-        list.add("photourl3");
-        list.add("photourl4");
-        list.add("photourl5");
-        list.add("below_market");
-        list.add("location");
-        list.add("transmission");
-        list.add("engine");
-        list.add("exterior_color");
-        list.add("interior_color");
-        list.add("VIN_number");
-        list.add("drive_train");
-        list.add("description");
-        list.add("year");
-        list.add("model");
-
-        // Create cells
-        for (int i = 0; i < list.size(); i++) {
-            Cell cell = headerRow.createCell(i);
-            cell.setCellValue(list.get(i));
-            cell.setCellStyle(headerCellStyle);
+        } catch (FileNotFoundException ex) {
+            ex.printStackTrace();
         }
+    }
 
-        // Create Cell Style for formatting Date
-        CellStyle dateCellStyle = workbook.createCellStyle();
-        dateCellStyle.setDataFormat(createHelper.createDataFormat().getFormat("dd/MM/yyyy"));
+    public void createXlsFile() throws IOException {
 
-        // Create Other rows and cells with employees data
-        int rowNum = 1;
-        int max = 6;
-        for (Data data : datalist) {
-            Row row = sheet.createRow(rowNum++);
-            row.createCell(0).setCellValue(data.getPost_title());
-            row.createCell(1).setCellValue(data.getPost_content());
-            row.createCell(2).setCellValue(data.getPost_excerpt());
-            row.createCell(3).setCellValue(data.getPost_status());
-            row.createCell(4).setCellValue(data.getMake());
-            row.createCell(5).setCellValue(data.getCondition());
-            row.createCell(6).setCellValue(data.getSale_price());
-            row.createCell(7).setCellValue(data.getPrice());
-            row.createCell(8).setCellValue(data.getMileage());
-            row.createCell(9).setCellValue(data.getFeatured_Image());
-            row.createCell(10).setCellValue(data.getImages());
-            row.createCell(11).setCellValue(data.getPhotourl1());
-            row.createCell(12).setCellValue(data.getPhotourl2());
-            row.createCell(13).setCellValue(data.getPhotourl3());
-            row.createCell(14).setCellValue(data.getPhotourl4());
-            row.createCell(14).setCellValue(data.getPhotourl5());
-            row.createCell(14).setCellValue(data.getBelow_market());
-            row.createCell(14).setCellValue(data.getLocation());
-            row.createCell(14).setCellValue(data.getTransmission());
-            row.createCell(14).setCellValue(data.getEngine());
-            row.createCell(14).setCellValue(data.getExterior_color());
-            row.createCell(14).setCellValue(data.getInterior_color());
-            row.createCell(14).setCellValue(data.getVIN_number());
-            row.createCell(14).setCellValue(data.getDrive_train());
-            row.createCell(14).setCellValue(data.getDescription());
-            row.createCell(14).setCellValue(data.getYear());
-            row.createCell(14).setCellValue(data.getModel());
+        try {
+            new FileInputStream(location + "/inventory.xlsx");
+        } catch (FileNotFoundException e) {
+            new File("/var/lib/tomcat8/inventory").mkdir();
+            Workbook workbook = new XSSFWorkbook();
+
+            CreationHelper createHelper = workbook.getCreationHelper();
+            Sheet sheet = workbook.createSheet("inventory");
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerFont.setFontHeightInPoints((short) 14);
+            headerFont.setColor(IndexedColors.RED.getIndex());
+
+            CellStyle headerCellStyle = workbook.createCellStyle();
+            headerCellStyle.setFont(headerFont);
+
+            Row headerRow = sheet.createRow(1);
+//            
+            ArrayList<String> list = new ArrayList();
+            ArrayList<String> list2 = new ArrayList();
+
+            list.add("Post_title");
+            list.add("post_content");
+            list.add("post_excerpt");
+            list.add("post_status");
+            list.add("make");
+            list.add("condition");
+            list.add("Sale price");
+            list.add("Price");
+            list.add("Mileage");
+            list.add("Featured Image");
+            list.add("Images");
+            list.add("photourl1");
+            list.add("photourl2");
+            list.add("photourl3");
+            list.add("photourl4");
+            list.add("photourl5");
+            list.add("below_market");
+            list.add("location");
+            list.add("transmission");
+            list.add("engine");
+            list.add("exterior_color");
+            list.add("interior_color");
+            list.add("VIN_number");
+            list.add("drive_train");
+            list.add("description");
+            list.add("year");
+            list.add("model");
+
+            for (int i = 0; i < list.size(); i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(list.get(i));
+                cell.setCellStyle(headerCellStyle);
+            }
+
+            CellStyle dateCellStyle = workbook.createCellStyle();
+            dateCellStyle.setDataFormat(createHelper.createDataFormat().getFormat("dd/MM/yyyy"));
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 2));
+            FileOutputStream fileOut = new FileOutputStream(location + "/inventory.xlsx");
+            workbook.write(fileOut);
+            fileOut.close();
+            System.out.println("Excel Created");
         }
-
-        for (int i = 0; i < list.size(); i++) {
-            sheet.autoSizeColumn(i);
-        }
-
-        FileOutputStream fileOut = new FileOutputStream(location+"/inventory.xlsx");
-        workbook.write(fileOut);
-        fileOut.close();
-        workbook.close();
     }
 }
