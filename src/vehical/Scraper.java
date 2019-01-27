@@ -293,18 +293,18 @@ public class Scraper {
                 row.createCell(12).setCellValue(data.getPhotourl2());
                 row.createCell(13).setCellValue(data.getPhotourl3());
                 row.createCell(14).setCellValue(data.getPhotourl4());
-                row.createCell(14).setCellValue(data.getPhotourl5());
-                row.createCell(14).setCellValue(data.getBelow_market());
-                row.createCell(14).setCellValue(data.getLocation());
-                row.createCell(14).setCellValue(data.getTransmission());
-                row.createCell(14).setCellValue(data.getEngine());
-                row.createCell(14).setCellValue(data.getExterior_color());
-                row.createCell(14).setCellValue(data.getInterior_color());
-                row.createCell(14).setCellValue(data.getVIN_number());
-                row.createCell(14).setCellValue(data.getDrive_train());
-                row.createCell(14).setCellValue(data.getDescription());
-                row.createCell(14).setCellValue(data.getYear());
-                row.createCell(14).setCellValue(data.getModel());
+                row.createCell(15).setCellValue(data.getPhotourl5());
+                row.createCell(16).setCellValue(data.getBelow_market());
+                row.createCell(17).setCellValue(data.getLocation());
+                row.createCell(18).setCellValue(data.getTransmission());
+                row.createCell(19).setCellValue(data.getEngine());
+                row.createCell(20).setCellValue(data.getExterior_color());
+                row.createCell(21).setCellValue(data.getInterior_color());
+                row.createCell(22).setCellValue(data.getVIN_number());
+                row.createCell(23).setCellValue(data.getDrive_train());
+                row.createCell(24).setCellValue(data.getDescription());
+                row.createCell(25).setCellValue(data.getYear());
+                row.createCell(26).setCellValue(data.getModel());
             }
 
             FileOutputStream fileOut = new FileOutputStream(location + "/inventory.xlsx");
